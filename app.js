@@ -1,6 +1,6 @@
 const express = require("express");
 const axios = require("axios");
-const path = require ("path");
+const path = require("path");
 
 const app = express();
 const PORT = 3000;
@@ -8,35 +8,56 @@ const PORT = 3000;
 app.use(express.static(path.join(__dirname, "public")));
 
 app.get("/api/lokasi", async (req, res) => {
-    const kota = "jakarta"
+    // 1. Ambil nama kota dari query URL (misal: /api/lokasi?kota=bandung)
+    const kota = req.query.kota;
+
+    // Jika user tidak memasukkan kota, kembalikan error 400
+    if (!kota) {
+        return res.status(400).json({ message: "Parameter kota wajib diisi!" });
+    }
 
     const apiKey = "TmW3n2IbOKaZxkghOoYB";
+    const url = `https://api.maptiler.com/geocoding/${encodeURIComponent(kota)}.json?key=${apiKey}`;
 
-    const url = `https://api.maptiler.com/geocoding/${kota}.json?key=${apiKey}`;
-
-    try{
+    try {
         const response = await axios.get(url);
-        console.log(response.data);
-
         const data = response.data;
 
-        const lokasi = data.features[0].matching_text;
-        const koordinat = data.features[0].geometry.coordinates;
+        // Pastikan MapTiler menemukan lokasi yang dicari
+        if (data.features && data.features.length > 0) {
+            const feature = data.features[0];
+            
+            const longitude = feature.geometry.coordinates[0];
+            const latitude = feature.geometry.coordinates[1];
 
-        res.json({
-            kota: lokasi,
-            koordinat: koordinat
-        });
+            // 2. Ekstrak data negara, provinsi, dan kecamatan dari 'context'
+            let negara = "-", provinsi = "-", kecamatan = "-";
+            
+            if (feature.context) {
+                feature.context.forEach(ctx => {
+                    if (ctx.id.includes("country")) negara = ctx.text;
+                    if (ctx.id.includes("region")) provinsi = ctx.text;
+                    if (ctx.id.includes("county") || ctx.id.includes("city")) kecamatan = ctx.text;
+                });
+            }
+
+            // Kirim respons JSON lengkap ke frontend
+            res.json({
+                kota: feature.text,
+                negara: negara || feature.text,
+                provinsi: provinsi,
+                kecamatan: kecamatan,
+                longitude: longitude,
+                latitude: latitude
+            });
+        } else {
+            res.status(404).json({ message: "Lokasi tidak ditemukan" });
+        }
 
     } catch (error) {
-
         console.error(error.message);
-
-        res.status(500).json({
-            message: "Gagal mengambil data dari MapTiler"
-        });
+        res.status(500).json({ message: "Gagal mengambil data dari MapTiler" });
     }
-    
 });
 
 app.listen(PORT, () => {
