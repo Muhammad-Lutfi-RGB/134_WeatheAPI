@@ -31,21 +31,26 @@ app.get("/api/lokasi", async (req, res) => {
             const latitude = feature.geometry.coordinates[1];
 
             // 2. Ekstrak data negara, provinsi, dan kecamatan dari 'context'
-            let negara = "-", provinsi = "-", kecamatan = "-";
+            // Ekstrak data
+            let negara = "-", provinsi = "-", kabupaten = "-", kecamatan = "-";
             
             if (feature.context) {
                 feature.context.forEach(ctx => {
                     if (ctx.id.includes("country")) negara = ctx.text;
                     if (ctx.id.includes("region")) provinsi = ctx.text;
-                    if (ctx.id.includes("county") || ctx.id.includes("city")) kecamatan = ctx.text;
+                    // 'county' lebih tepat diterjemahkan sebagai Kabupaten
+                    if (ctx.id.includes("county")) kabupaten = ctx.text;
+                    // 'city', 'municipality', atau 'locality' biasanya untuk Kota/Kecamatan/Area
+                    if (ctx.id.includes("city") || ctx.id.includes("municipality") || ctx.id.includes("locality")) kecamatan = ctx.text;
                 });
             }
 
             // Kirim respons JSON lengkap ke frontend
             res.json({
-                kota: feature.text,
+                kota: feature.text, // Ini biasanya nama spesifik yang dicari (misal: Sampit)
                 negara: negara || feature.text,
                 provinsi: provinsi,
+                kabupaten: kabupaten,
                 kecamatan: kecamatan,
                 longitude: longitude,
                 latitude: latitude
