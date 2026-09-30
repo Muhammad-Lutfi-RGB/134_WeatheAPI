@@ -157,9 +157,13 @@
                 <span class="label">🌍 Negara</span>
                 <span class="value" id="resNegara">-</span>
             </div>
-            <div class="result-item">
+           <div class="result-item">
                 <span class="label">🏛️ Provinsi</span>
                 <span class="value" id="resProvinsi">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">🏢 Kabupaten/Kota</span>
+                <span class="value" id="resKabupaten">-</span>
             </div>
             <div class="result-item">
                 <span class="label">🏡 Kecamatan/Area</span>
@@ -177,7 +181,6 @@
     </div>
 
 <script>
-        // Fungsi untuk men-trigger pencarian saat tombol "Enter" ditekan
         document.getElementById("inputLokasi").addEventListener("keypress", function(event) {
             if (event.key === "Enter") {
                 event.preventDefault();
@@ -195,34 +198,27 @@
                 tampilkanError("Silakan masukkan nama lokasi terlebih dahulu!");
                 return;
             }
-
-            // Reset tampilan
             resultCard.style.display = "none";
             errorMsg.style.display = "none";
             loadingMsg.style.display = "block";
 
-            // 1. Mengubah URL fetch ke backend app.js kita
             const url = `/api/lokasi?kota=${encodeURIComponent(inputVal)}`;
 
             try {
                 const response = await fetch(url);
-                const data = await response.json(); // Ambil data JSON dari backend
+                const data = await response.json(); 
 
-                // Jika backend merespons error (misal 404 atau 500)
                 if (!response.ok) {
                     throw new Error(data.message || "Gagal mengambil data");
                 }
 
-                // 2. Kode penggantinya ada di sini.
-                // Karena data sudah diekstrak dan dirapikan oleh app.js, 
-                // kita bisa langsung menampilkannya ke HTML.
                 document.getElementById("resNegara").innerText = data.negara;
                 document.getElementById("resProvinsi").innerText = data.provinsi;
+                document.getElementById("resKabupaten").innerText = data.kabupaten; 
                 document.getElementById("resKecamatan").innerText = data.kecamatan;
                 document.getElementById("resLong").innerText = data.longitude.toFixed(5);
                 document.getElementById("resLat").innerText = data.latitude.toFixed(5);
 
-                // Sembunyikan loading, tampilkan hasil
                 loadingMsg.style.display = "none";
                 resultCard.style.display = "block";
 
