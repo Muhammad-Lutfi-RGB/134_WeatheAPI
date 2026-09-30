@@ -1,46 +1,244 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geolocation</title>
+    <title>GeoLocator - MapTiler API</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-size: 1.5rem;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .search-box input {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            outline: none;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            transition: all 0.3s;
+        }
+
+        .search-box input:focus {
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .search-box button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: #ff7e5f;
+            background: linear-gradient(to right, #ff7e5f, #feb47b);
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .search-box button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 126, 95, 0.4);
+        }
+
+        .result-card {
+            display: none;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-item {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .value {
+            font-weight: 600;
+            text-align: right;
+            max-width: 60%;
+            word-wrap: break-word;
+        }
+
+        .loading, .error {
+            text-align: center;
+            display: none;
+            margin-top: 15px;
+            font-weight: 300;
+        }
+
+        .error {
+            color: #ff6b6b;
+        }
+    </style>
 </head>
-
 <body>
-    
-    <h3>Nama : </h3>
-    <h3>NIM  : </h3>
 
-    <p>
-        Kota :
-        <span id="lokasi"></span>
-    </p>
+    <div class="container">
+        <h2>📍 Pencarian Lokasi</h2>
+        
+        <div class="search-box">
+            <input type="text" id="inputLokasi" placeholder="Masukkan nama kota/lokasi..." autocomplete="off">
+            <button onclick="cariLokasi()">Cari</button>
+        </div>
 
-    <hr>
+        <div id="loadingMessage" class="loading">⏳ Mengambil data...</div>
+        <div id="errorMessage" class="error"></div>
 
-    <p>Koordinat :
-        <span id="negara"></span>
-    </p>
+        <div id="resultCard" class="result-card">
+            <div class="result-item">
+                <span class="label">🌍 Negara</span>
+                <span class="value" id="resNegara">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">🏛️ Provinsi</span>
+                <span class="value" id="resProvinsi">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">🏡 Kecamatan/Area</span>
+                <span class="value" id="resKecamatan">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">↔️ Longitude</span>
+                <span class="value" id="resLong">-</span>
+            </div>
+            <div class="result-item">
+                <span class="label">↕️ Latitude</span>
+                <span class="value" id="resLat">-</span>
+            </div>
+        </div>
+    </div>
 
-    <script>
+<script>
+        // Fungsi untuk men-trigger pencarian saat tombol "Enter" ditekan
+        document.getElementById("inputLokasi").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                cariLokasi();
+            }
+        });
 
-        fetch("/api/lokasi")
-            .then(response => response.json())
-            .then(data => {
+        async function cariLokasi() {
+            const inputVal = document.getElementById("inputLokasi").value.trim();
+            const resultCard = document.getElementById("resultCard");
+            const loadingMsg = document.getElementById("loadingMessage");
+            const errorMsg = document.getElementById("errorMessage");
 
-                console.log(data);
+            if (!inputVal) {
+                tampilkanError("Silakan masukkan nama lokasi terlebih dahulu!");
+                return;
+            }
 
-                document.getElementById("lokasi").innerHTML = data.kota;
+            // Reset tampilan
+            resultCard.style.display = "none";
+            errorMsg.style.display = "none";
+            loadingMsg.style.display = "block";
 
-                document.getElementById("negara").innerHTML = data.koordinat;
+            // 1. Mengubah URL fetch ke backend app.js kita
+            const url = `/api/lokasi?kota=${encodeURIComponent(inputVal)}`;
 
-            })
-            .catch(error => {
+            try {
+                const response = await fetch(url);
+                const data = await response.json(); // Ambil data JSON dari backend
 
+                // Jika backend merespons error (misal 404 atau 500)
+                if (!response.ok) {
+                    throw new Error(data.message || "Gagal mengambil data");
+                }
+
+                // 2. Kode penggantinya ada di sini.
+                // Karena data sudah diekstrak dan dirapikan oleh app.js, 
+                // kita bisa langsung menampilkannya ke HTML.
+                document.getElementById("resNegara").innerText = data.negara;
+                document.getElementById("resProvinsi").innerText = data.provinsi;
+                document.getElementById("resKecamatan").innerText = data.kecamatan;
+                document.getElementById("resLong").innerText = data.longitude.toFixed(5);
+                document.getElementById("resLat").innerText = data.latitude.toFixed(5);
+
+                // Sembunyikan loading, tampilkan hasil
+                loadingMsg.style.display = "none";
+                resultCard.style.display = "block";
+
+            } catch (error) {
                 console.error(error);
-            
-            });
+                tampilkanError(error.message || "Terjadi kesalahan sistem. Gagal mengambil data.");
+            }
+        }
 
+        function tampilkanError(pesan) {
+            document.getElementById("loadingMessage").style.display = "none";
+            document.getElementById("resultCard").style.display = "none";
+            const errorMsg = document.getElementById("errorMessage");
+            errorMsg.innerText = "⚠️ " + pesan;
+            errorMsg.style.display = "block";
+        }
     </script>
 </body>
 </html>
