@@ -137,12 +137,45 @@
         .error {
             color: #ff6b6b;
         }
+
+        .student-info {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .student-info .info-item {
+            margin-bottom: 8px;
+            display: flex;
+        }
+
+        .student-info .info-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .student-info span {
+            font-weight: 600;
+            width: 70px; /* Membuat titik dua sejajar */
+            color: #ffb7b2; /* Warna aksen agar sedikit menonjol */
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h2>📍 Pencarian Lokasi</h2>
+
+        <div class="student-info">
+            <div class="info-item">
+                <span>Nama</span>: Muhammad Lutfi Sirajul Huda
+            </div>
+            <div class="info-item">
+                <span>NIM</span>: 20240140134
+            </div>
+        </div>
         
         <div class="search-box">
             <input type="text" id="inputLokasi" placeholder="Masukkan nama kota/lokasi..." autocomplete="off">
